@@ -38,6 +38,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
 }
 
 .hero__scene {
@@ -45,6 +46,14 @@ body {
   height: 100%;
   display: block;
   filter: sepia(0.22) saturate(0.8) contrast(1.05) brightness(0.96);
+  transform-origin: 55% 60%;
+  animation: ambientPan 26s ease-in-out infinite alternate;
+}
+
+@keyframes ambientPan {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.07) translate(-1.5%, -1%); }
+}
 }
 
 .hero__vignette {
