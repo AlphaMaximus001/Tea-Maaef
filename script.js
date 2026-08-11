@@ -69,130 +69,146 @@ setInterval(tickClock, 1000 * 15);
     return `${m}:${s}`;
   }
 
-  let ytPlayer = null;
-  let progressTimer = null;
-  let apiReady = false;
+  // --- raw postMessage control of a bare youtube.com/embed iframe -------------
+  // Deliberately skips youtube.com/iframe_api (the official JS wrapper): that
+  // script's own internal analytics/logging calls are what was getting blocked
+  // by Brave Shields and by Firefox's default privacy protections, stalling
+  // playback before it ever started. Talking to the embed directly via
+  // postMessage is the same underlying protocol the wrapper itself uses, minus
+  // that extra bootstrap script.
+  const YT_ORIGIN = "https://www.youtube.com";
+  const iframe = document.getElementById("yt-player");
+  const PLAYER_STATE = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 };
+
+  let ready = false;
   let stateChanged = false;
+  let lastKnownState = PLAYER_STATE.UNSTARTED;
+  let lastVideoId = null;
   let consecutiveErrors = 0;
+  let listenHandle = null;
+
+  function post(func, args) {
+    if (!iframe.contentWindow) return;
+    iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: args || [] }), YT_ORIGIN);
+  }
 
   function showAdBlockNotice() {
-    console.error("[player] cued but no state change after 6s — likely blocked by an ad blocker (e.g. Brave Shields, uBlock)");
-    trackTitle.textContent = "एडब्लॉकर इसे रोक रहा है";
-    trackArtist.textContent = "इस साइट के लिए शील्ड्स/एडब्लॉकर बंद करें";
+    console.error("[player] iframe loaded but no info ever came back — likely blocked by an ad blocker or the browser's privacy protections (Brave Shields, Firefox ETP/fingerprinting resistance, etc.)");
+    trackTitle.textContent = "ब्राउज़र इसे रोक रहा है";
+    trackArtist.textContent = "प्राइवेसी शील्ड्स/एडब्लॉकर बंद करके देखें";
   }
 
-  function updateTrackMeta() {
-    if (!ytPlayer || typeof ytPlayer.getVideoData !== "function") return;
-    const data = ytPlayer.getVideoData();
-    if (!data || !data.video_id) return;
-    trackTitle.textContent = data.title || "चाय गरम रेडियो";
-    trackArtist.textContent = data.author || "YouTube";
-    if (ytThumbFallback) ytThumbFallback.remove();
-    ytThumb.style.backgroundImage = `url(https://img.youtube.com/vi/${data.video_id}/hqdefault.jpg)`;
+  function fmt(t) {
+    if (!isFinite(t)) return "0:00";
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
   }
 
-  function updateProgress() {
-    if (!ytPlayer || typeof ytPlayer.getCurrentTime !== "function") return;
-    const cur = ytPlayer.getCurrentTime() || 0;
-    const dur = ytPlayer.getDuration() || 0;
-    curTime.textContent = fmt(cur);
-    durTime.textContent = fmt(dur);
-    progressBar.style.width = dur ? `${(cur / dur) * 100}%` : "0%";
-  }
+  function handleInfo(info) {
+    if (!info) return;
+    stateChanged = true;
 
-  function startProgressLoop() {
-    clearInterval(progressTimer);
-    progressTimer = setInterval(updateProgress, 500);
-  }
-
-  function stopProgressLoop() {
-    clearInterval(progressTimer);
-  }
-
-  window.onYouTubeIframeAPIReady = function () {
-    console.log("[player] YT API ready, constructing player");
-    apiReady = true;
-    try {
-      ytPlayer = new YT.Player("yt-player", {
-        height: "1",
-        width: "1",
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          disablekb: 1,
-        },
-        events: {
-          onReady: (e) => {
-            console.log("[player] onReady, cueing", YT_VIDEO_IDS.length, "tracks");
-            e.target.cuePlaylist({ playlist: YT_VIDEO_IDS });
-            e.target.setShuffle(true);
-            updateTrackMeta();
-            // if cuePlaylist never actually progresses (e.g. an ad blocker silently
-            // drops the requests the embed needs), say so instead of spinning forever
-            setTimeout(() => {
-              if (!stateChanged) showAdBlockNotice();
-            }, 6000);
-          },
-          onStateChange: (e) => {
-            console.log("[player] state change:", e.data);
-            stateChanged = true;
-            if (e.data !== YT.PlayerState.UNSTARTED) consecutiveErrors = 0;
-            updateTrackMeta();
-            if (e.data === YT.PlayerState.PLAYING) {
-              playIcon.innerHTML = ICON_PAUSE;
-              startProgressLoop();
-            } else {
-              playIcon.innerHTML = ICON_PLAY;
-              stopProgressLoop();
-            }
-          },
-          // a track can be broken/removed/region-blocked; skip it instead of getting stuck
-          onError: (e) => {
-            console.warn("[player] track error:", e.data);
-            consecutiveErrors += 1;
-            if (consecutiveErrors <= YT_VIDEO_IDS.length && ytPlayer) {
-              ytPlayer.nextVideo();
-            } else {
-              trackTitle.textContent = "गाने लोड नहीं हो पाए";
-              trackArtist.textContent = "बाद में दोबारा कोशिश करें";
-            }
-          },
-        },
-      });
-    } catch (err) {
-      console.error("[player] failed to construct YT.Player:", err);
-      trackTitle.textContent = "प्लेयर शुरू नहीं हो सका";
-      trackArtist.textContent = String(err && err.message || err);
+    if (typeof info.playerState === "number" && info.playerState !== lastKnownState) {
+      lastKnownState = info.playerState;
+      console.log("[player] state change:", lastKnownState);
+      if (lastKnownState !== PLAYER_STATE.UNSTARTED) consecutiveErrors = 0;
+      if (lastKnownState === PLAYER_STATE.PLAYING) {
+        playIcon.innerHTML = ICON_PAUSE;
+      } else {
+        playIcon.innerHTML = ICON_PLAY;
+      }
     }
-  };
 
-  function showLoadFailure(reason) {
-    console.error("[player] YouTube IFrame API failed to load:", reason);
-    trackTitle.textContent = "प्लेयर लोड नहीं हो सका";
-    trackArtist.textContent = "कंसोल देखें (F12)";
+    const vd = info.videoData;
+    if (vd && vd.video_id && vd.video_id !== lastVideoId) {
+      lastVideoId = vd.video_id;
+      trackTitle.textContent = vd.title || "चाय गरम रेडियो";
+      trackArtist.textContent = vd.author || "YouTube";
+      if (ytThumbFallback) ytThumbFallback.remove();
+      ytThumb.style.backgroundImage = `url(https://img.youtube.com/vi/${vd.video_id}/hqdefault.jpg)`;
+    }
+
+    if (typeof info.currentTime === "number" && typeof info.duration === "number") {
+      curTime.textContent = fmt(info.currentTime);
+      durTime.textContent = fmt(info.duration);
+      progressBar.style.width = info.duration ? `${(info.currentTime / info.duration) * 100}%` : "0%";
+    }
+
+    if (info.errorCode || info.playerError) {
+      console.warn("[player] track error:", info.errorCode || info.playerError);
+      consecutiveErrors += 1;
+      if (consecutiveErrors <= YT_VIDEO_IDS.length) {
+        post("nextVideo");
+      } else {
+        trackTitle.textContent = "गाने लोड नहीं हो पाए";
+        trackArtist.textContent = "बाद में दोबारा कोशिश करें";
+      }
+    }
   }
 
-  console.log("[player] requesting YouTube IFrame API script");
-  const apiTag = document.createElement("script");
-  apiTag.src = "https://www.youtube.com/iframe_api";
-  apiTag.onerror = () => showLoadFailure("script failed to load (network/blocked)");
-  document.head.appendChild(apiTag);
+  window.addEventListener("message", (e) => {
+    if (e.origin !== YT_ORIGIN) return;
+    let data;
+    try {
+      data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+    } catch {
+      return;
+    }
+    if (!data || typeof data !== "object") return;
 
-  // if the script loads but YouTube never calls back, surface that instead of spinning forever
-  setTimeout(() => {
-    if (!apiReady) showLoadFailure("onYouTubeIframeAPIReady never fired within 6s");
-  }, 6000);
-
-  playBtn.addEventListener("click", () => {
-    if (!ytPlayer || typeof ytPlayer.getPlayerState !== "function") return;
-    const state = ytPlayer.getPlayerState();
-    if (state === YT.PlayerState.PLAYING) {
-      ytPlayer.pauseVideo();
-    } else {
-      ytPlayer.playVideo();
+    if (data.event === "initialDelivery" || data.event === "infoDelivery") {
+      if (!ready) {
+        ready = true;
+        clearInterval(listenHandle);
+        console.log("[player] embed responded, ready");
+        post("setShuffle", [true]);
+      }
+      handleInfo(data.info);
     }
   });
 
-  prevBtn.addEventListener("click", () => ytPlayer && ytPlayer.previousVideo());
-  nextBtn.addEventListener("click", () => ytPlayer && ytPlayer.nextVideo());
+  iframe.addEventListener("load", () => {
+    console.log("[player] embed iframe loaded, sending listen handshake");
+    // the embed doesn't always catch the first "listening" ping; retry briefly
+    let attempts = 0;
+    listenHandle = setInterval(() => {
+      attempts += 1;
+      if (ready || attempts > 20) {
+        clearInterval(listenHandle);
+        if (!ready) showAdBlockNotice();
+        return;
+      }
+      if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: "chai-garam-player" }), YT_ORIGIN);
+      }
+    }, 300);
+  });
+
+  const firstId = YT_VIDEO_IDS[0];
+  const restIds = YT_VIDEO_IDS.slice(1).join(",");
+  const params = new URLSearchParams({
+    enablejsapi: "1",
+    controls: "0",
+    disablekb: "1",
+    autoplay: "0",
+    playsinline: "1",
+    rel: "0",
+    modestbranding: "1",
+    playlist: restIds,
+    origin: window.location.origin,
+  });
+  console.log("[player] loading embed for", YT_VIDEO_IDS.length, "tracks");
+  iframe.src = `${YT_ORIGIN}/embed/${firstId}?${params.toString()}`;
+
+  playBtn.addEventListener("click", () => {
+    if (lastKnownState === PLAYER_STATE.PLAYING) {
+      post("pauseVideo");
+    } else {
+      post("playVideo");
+    }
+  });
+
+  prevBtn.addEventListener("click", () => post("previousVideo"));
+  nextBtn.addEventListener("click", () => post("nextVideo"));
 })();
