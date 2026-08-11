@@ -78,7 +78,7 @@ setInterval(tickClock, 1000 * 15);
     if (!ytPlayer || typeof ytPlayer.getVideoData !== "function") return;
     const data = ytPlayer.getVideoData();
     if (!data || !data.video_id) return;
-    trackTitle.textContent = data.title || "चाय अड्डा रेडियो";
+    trackTitle.textContent = data.title || "चाय गरम रेडियो";
     trackArtist.textContent = data.author || "YouTube";
     if (ytThumbFallback) ytThumbFallback.remove();
     ytThumb.style.backgroundImage = `url(https://img.youtube.com/vi/${data.video_id}/hqdefault.jpg)`;
