@@ -30,21 +30,10 @@ setInterval(tickClock, 1000 * 15);
   }
 })();
 
-// floating audio player, backed by an explicit list of YouTube video IDs
-// (matched to the "Chai & Classics" Spotify playlist, one lookup per track)
+// floating audio player, backed directly by the given YouTube playlist
 (function setupPlayer() {
-  const YT_VIDEO_IDS = [
-    "mFNNKeunEeY", "waeAGdCvJd8", "hjfzFVw2Zjo", "569LRWPPYqI", "eCpbYmO4Ndo",
-    "4h4MIVYS6S8", "aqppgtdWt4M", "d_5yHuh7L54", "HxMZXp-ur3I", "YJTLMl1iRW4",
-    "L8ywQkyf37k", "jMS9Kcl1ilQ", "QkGqpVYjLUw", "xP2OcqFcKSY", "b04C6hKGLXA",
-    "o4qTd5VhLcs", "hD0vuSJxzmc", "rGJO3P_UAzs", "j4U8GzVz75M", "SBFagY_I8sM",
-    "Ju6kNKaBOQ8", "rzG0m0czKF4", "1RUuRXBq9a0", "aZyWUVTg0Ps", "ME0fguaRPhA",
-    "beXSXmBLmgg", "3ct4ppLwXCQ", "1n13FVRtVxs", "W6tsny4iFJY", "wulRtvNuTl8",
-    "xImqpaP5j2k", "b4Fok9Y3sho", "ofjT0GcUijo", "vJTl-BcE0Fk", "swRditfMHK8",
-    "w0AkZQUokog", "jyYqrVfopxo", "E6L_qqUx7aY", "qT6ryaYvY9M", "EYMeqpY5HFg",
-    "BqdzXlDfubg", "aSJ_jcEPOu0", "Zv7n2juHqQI", "MH_Q8YCS7CI", "_lgACMqCpus",
-    "P4ofSL-n3s0", "dynXfBVQ_zk", "ciU2Kb0bxew", "PUBaJz8eoRk", "4U1HsYrcHuc",
-  ];
+  const YT_PLAYLIST_ID = "PLVwbgC8mRDea4xoSwC0ZNMiIr8OHiaFog";
+  const MAX_CONSECUTIVE_ERRORS = 15;
 
   const playBtn = document.getElementById("playBtn");
   const playIcon = document.getElementById("playIcon");
@@ -98,13 +87,6 @@ setInterval(tickClock, 1000 * 15);
     trackArtist.textContent = "प्राइवेसी शील्ड्स/एडब्लॉकर बंद करके देखें";
   }
 
-  function fmt(t) {
-    if (!isFinite(t)) return "0:00";
-    const m = Math.floor(t / 60);
-    const s = Math.floor(t % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  }
-
   function handleInfo(info) {
     if (!info) return;
     stateChanged = true;
@@ -138,7 +120,7 @@ setInterval(tickClock, 1000 * 15);
     if (info.errorCode || info.playerError) {
       console.warn("[player] track error:", info.errorCode || info.playerError);
       consecutiveErrors += 1;
-      if (consecutiveErrors <= YT_VIDEO_IDS.length) {
+      if (consecutiveErrors <= MAX_CONSECUTIVE_ERRORS) {
         post("nextVideo");
       } else {
         trackTitle.textContent = "गाने लोड नहीं हो पाए";
@@ -185,8 +167,6 @@ setInterval(tickClock, 1000 * 15);
     }, 300);
   });
 
-  const firstId = YT_VIDEO_IDS[0];
-  const restIds = YT_VIDEO_IDS.slice(1).join(",");
   const params = new URLSearchParams({
     enablejsapi: "1",
     controls: "0",
@@ -195,11 +175,11 @@ setInterval(tickClock, 1000 * 15);
     playsinline: "1",
     rel: "0",
     modestbranding: "1",
-    playlist: restIds,
+    list: YT_PLAYLIST_ID,
     origin: window.location.origin,
   });
-  console.log("[player] loading embed for", YT_VIDEO_IDS.length, "tracks");
-  iframe.src = `${YT_ORIGIN}/embed/${firstId}?${params.toString()}`;
+  console.log("[player] loading embed for playlist", YT_PLAYLIST_ID);
+  iframe.src = `${YT_ORIGIN}/embed/videoseries?${params.toString()}`;
 
   playBtn.addEventListener("click", () => {
     if (lastKnownState === PLAYER_STATE.PLAYING) {
