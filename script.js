@@ -77,6 +77,23 @@ setInterval(tickClock, 1000 * 15);
   let heartbeatHandle = null;
   let noticeShown = false;
 
+  // The embed only pushes a fresh currentTime on real state-change events
+  // (play/pause/etc), not continuously during playback. So track a local
+  // clock between snapshots for a smooth live display, and resync to the
+  // authoritative value (correcting drift) whenever a real one arrives.
+  let syncedTime = 0;
+  let syncedDuration = 0;
+  let syncedAt = 0;
+  let tickHandle = null;
+
+  function tickProgress() {
+    if (lastKnownState !== PLAYER_STATE.PLAYING || !syncedDuration) return;
+    const elapsed = (Date.now() - syncedAt) / 1000;
+    const projected = Math.min(syncedTime + elapsed, syncedDuration);
+    curTime.textContent = fmt(projected);
+    progressBar.style.width = `${(projected / syncedDuration) * 100}%`;
+  }
+
   function sendListening() {
     if (iframe.contentWindow) {
       iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: "chai-garam-player" }), YT_ORIGIN);
@@ -119,9 +136,11 @@ setInterval(tickClock, 1000 * 15);
     }
 
     if (typeof info.currentTime === "number" && typeof info.duration === "number") {
-      curTime.textContent = fmt(info.currentTime);
+      syncedTime = info.currentTime;
+      syncedDuration = info.duration;
+      syncedAt = Date.now();
       durTime.textContent = fmt(info.duration);
-      progressBar.style.width = info.duration ? `${(info.currentTime / info.duration) * 100}%` : "0%";
+      tickProgress();
     }
 
     if (info.errorCode || info.playerError) {
@@ -158,9 +177,6 @@ setInterval(tickClock, 1000 * 15);
 
   iframe.addEventListener("load", () => {
     console.log("[player] embed iframe loaded, sending listen handshake");
-    // YouTube's embed only pushes fresh currentTime/duration in response to a
-    // "listening" ping — it's not a one-time handshake, the parent has to keep
-    // pinging for the whole session or progress just stops updating.
     let attempts = 0;
     heartbeatHandle = setInterval(() => {
       attempts += 1;
@@ -170,6 +186,7 @@ setInterval(tickClock, 1000 * 15);
       }
       sendListening();
     }, 250);
+    tickHandle = setInterval(tickProgress, 250);
   });
 
   const params = new URLSearchParams({
