@@ -74,7 +74,14 @@ setInterval(tickClock, 1000 * 15);
   let lastKnownState = PLAYER_STATE.UNSTARTED;
   let lastVideoId = null;
   let consecutiveErrors = 0;
-  let listenHandle = null;
+  let heartbeatHandle = null;
+  let noticeShown = false;
+
+  function sendListening() {
+    if (iframe.contentWindow) {
+      iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: "chai-garam-player" }), YT_ORIGIN);
+    }
+  }
 
   function post(func, args) {
     if (!iframe.contentWindow) return;
@@ -142,7 +149,6 @@ setInterval(tickClock, 1000 * 15);
     if (data.event === "initialDelivery" || data.event === "infoDelivery") {
       if (!ready) {
         ready = true;
-        clearInterval(listenHandle);
         console.log("[player] embed responded, ready");
         post("setShuffle", [true]);
       }
@@ -152,19 +158,18 @@ setInterval(tickClock, 1000 * 15);
 
   iframe.addEventListener("load", () => {
     console.log("[player] embed iframe loaded, sending listen handshake");
-    // the embed doesn't always catch the first "listening" ping; retry briefly
+    // YouTube's embed only pushes fresh currentTime/duration in response to a
+    // "listening" ping — it's not a one-time handshake, the parent has to keep
+    // pinging for the whole session or progress just stops updating.
     let attempts = 0;
-    listenHandle = setInterval(() => {
+    heartbeatHandle = setInterval(() => {
       attempts += 1;
-      if (ready || attempts > 20) {
-        clearInterval(listenHandle);
-        if (!ready) showAdBlockNotice();
-        return;
+      if (!ready && !noticeShown && attempts > 20) {
+        noticeShown = true;
+        showAdBlockNotice();
       }
-      if (iframe.contentWindow) {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: "chai-garam-player" }), YT_ORIGIN);
-      }
-    }, 300);
+      sendListening();
+    }, 250);
   });
 
   const params = new URLSearchParams({
