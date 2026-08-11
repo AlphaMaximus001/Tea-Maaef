@@ -114,7 +114,10 @@ setInterval(tickClock, 1000 * 15);
         disablekb: 1,
       },
       events: {
-        onReady: updateTrackMeta,
+        onReady: (e) => {
+          e.target.setShuffle(true);
+          updateTrackMeta();
+        },
         onStateChange: (e) => {
           updateTrackMeta();
           if (e.data === YT.PlayerState.PLAYING) {
