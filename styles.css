@@ -173,9 +173,20 @@ body {
   width: 42px; height: 42px;
   border-radius: 10px;
   background: linear-gradient(135deg, var(--orange), var(--red));
+  background-size: cover;
+  background-position: center;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem;
   flex-shrink: 0;
+}
+
+.player__yt-host {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .player__meta { flex: 1; min-width: 0; }
