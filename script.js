@@ -12,6 +12,24 @@ function tickClock() {
 tickClock();
 setInterval(tickClock, 1000 * 15);
 
+// crossfade the static poster out once the hero video actually has a frame ready
+(function crossfadePoster() {
+  const video = document.getElementById("heroVideo");
+  const poster = document.querySelector(".hero__poster");
+  if (!video || !poster) return;
+
+  function reveal() {
+    poster.classList.add("is-hidden");
+  }
+
+  if (video.readyState >= 2) {
+    reveal();
+  } else {
+    video.addEventListener("canplay", reveal, { once: true });
+    video.addEventListener("playing", reveal, { once: true });
+  }
+})();
+
 // floating audio player, backed by an explicit list of YouTube video IDs
 // (matched to the "Chai & Classics" Spotify playlist, one lookup per track)
 (function setupPlayer() {
@@ -53,6 +71,8 @@ setInterval(tickClock, 1000 * 15);
 
   let ytPlayer = null;
   let progressTimer = null;
+  let apiReady = false;
+  let consecutiveErrors = 0;
 
   function updateTrackMeta() {
     if (!ytPlayer || typeof ytPlayer.getVideoData !== "function") return;
@@ -83,6 +103,7 @@ setInterval(tickClock, 1000 * 15);
   }
 
   window.onYouTubeIframeAPIReady = function () {
+    apiReady = true;
     ytPlayer = new YT.Player("yt-player", {
       height: "1",
       width: "1",
@@ -98,6 +119,7 @@ setInterval(tickClock, 1000 * 15);
           updateTrackMeta();
         },
         onStateChange: (e) => {
+          if (e.data !== YT.PlayerState.UNSTARTED) consecutiveErrors = 0;
           updateTrackMeta();
           if (e.data === YT.PlayerState.PLAYING) {
             playIcon.innerHTML = ICON_PAUSE;
@@ -107,13 +129,41 @@ setInterval(tickClock, 1000 * 15);
             stopProgressLoop();
           }
         },
+        // a track can be broken/removed/region-blocked; skip it instead of getting stuck
+        onError: () => {
+          consecutiveErrors += 1;
+          if (consecutiveErrors <= YT_VIDEO_IDS.length && ytPlayer) {
+            ytPlayer.nextVideo();
+          } else {
+            trackTitle.textContent = "गाने लोड नहीं हो पाए";
+            trackArtist.textContent = "बाद में दोबारा कोशिश करें";
+          }
+        },
       },
     });
   };
 
-  const apiTag = document.createElement("script");
-  apiTag.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(apiTag);
+  // load the (fairly heavy) YouTube IFrame API after the page itself has settled,
+  // so it doesn't compete with the hero video/image for bandwidth on first paint
+  function loadYouTubeApi() {
+    const apiTag = document.createElement("script");
+    apiTag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(apiTag);
+
+    // if the IFrame API itself never loads (network/ad-blocker), surface that instead of spinning forever
+    setTimeout(() => {
+      if (!apiReady) {
+        trackTitle.textContent = "प्लेयर लोड नहीं हो सका";
+        trackArtist.textContent = "ब्राउज़र/एडब्लॉकर जाँचें";
+      }
+    }, 8000);
+  }
+
+  if (document.readyState === "complete") {
+    loadYouTubeApi();
+  } else {
+    window.addEventListener("load", loadYouTubeApi, { once: true });
+  }
 
   playBtn.addEventListener("click", () => {
     if (!ytPlayer || typeof ytPlayer.getPlayerState !== "function") return;
