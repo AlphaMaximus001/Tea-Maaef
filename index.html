@@ -4,14 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>चाय अड्डा | Chai Adda</title>
-<meta name="description" content="असली अड्डे की चाय — गरम, ताज़ा, और अपनों जैसी। Chai Adda: the tea stall that feels like home.">
+<meta name="description" content="असली अड्डे की चाय — गरम, ताज़ा, और अपनों जैसी।">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍵</text></svg>">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- ===================== HERO ===================== -->
-<header class="hero">
+<div class="hero">
   <div class="hero__bg" aria-hidden="true">
     <svg class="hero__scene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
       <!-- sky/back wall -->
@@ -77,12 +76,7 @@
     <p class="hero__eyebrow">रोज़ की अड्डेबाज़ी, एक कप चाय के साथ</p>
     <h1 class="hero__title">चाय अड्डा</h1>
     <p class="hero__tagline">गरम कड़क चाय, ताज़ी भाप, अपनों वाली बातें</p>
-    <a href="#menu" class="hero__cta">मेन्यू देखें</a>
   </div>
-
-  <button class="scrollhint" id="scrollHint" aria-label="नीचे स्क्रॉल करें">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
 
   <!-- floating audio player -->
   <div class="player" id="player">
@@ -110,89 +104,7 @@
       <!-- अपना MP3 यहाँ जोड़ें: <source src="assets/audio/theme.mp3" type="audio/mpeg"> -->
     </audio>
   </div>
-</header>
-
-<!-- ===================== ABOUT ===================== -->
-<section class="about" id="about">
-  <div class="wrap">
-    <h2>अड्डे की कहानी</h2>
-    <p>तीस साल पहले एक छोटी सी टपरी से शुरू हुआ सफ़र आज मोहल्ले का अड्डा बन चुका है। यहाँ चाय सिर्फ चाय नहीं, बहाना है — दोस्तों से मिलने का, दिनभर की थकान भुलाने का, और अपनों के साथ दो पल बैठने का।</p>
-    <div class="about__stats">
-      <div><strong>30+</strong><span>साल का भरोसा</span></div>
-      <div><strong>15</strong><span>तरह की चाय</span></div>
-      <div><strong>5AM–11PM</strong><span>रोज़ खुला</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== MENU ===================== -->
-<section class="menu" id="menu">
-  <div class="wrap">
-    <h2>मेन्यू</h2>
-    <div class="menu__grid">
-      <article class="menu__card">
-        <span class="menu__emoji">🫖</span>
-        <h3>कड़क चाय</h3>
-        <p>दूध, अदरक और खास मसालों वाली कड़क चाय</p>
-        <span class="menu__price">₹10</span>
-      </article>
-      <article class="menu__card">
-        <span class="menu__emoji">🌿</span>
-        <h3>इलायची चाय</h3>
-        <p>ताज़ी इलायची के साथ खुशबूदार चाय</p>
-        <span class="menu__price">₹15</span>
-      </article>
-      <article class="menu__card">
-        <span class="menu__emoji">🍯</span>
-        <h3>तुलसी चाय</h3>
-        <p>तुलसी और शहद वाली सेहतमंद चाय</p>
-        <span class="menu__price">₹15</span>
-      </article>
-      <article class="menu__card">
-        <span class="menu__emoji">🧊</span>
-        <h3>कुल्हड़ चाय</h3>
-        <p>मिट्टी के कुल्हड़ में परोसी गई पारंपरिक चाय</p>
-        <span class="menu__price">₹20</span>
-      </article>
-      <article class="menu__card">
-        <span class="menu__emoji">🍪</span>
-        <h3>चाय + बिस्कुट</h3>
-        <p>ऑस्मानिया बिस्कुट के साथ चाय का जोड़ा</p>
-        <span class="menu__price">₹25</span>
-      </article>
-      <article class="menu__card">
-        <span class="menu__emoji">☕</span>
-        <h3>ब्लैक कॉफ़ी</h3>
-        <p>तेज़ शुरुआत के लिए कड़क ब्लैक कॉफ़ी</p>
-        <span class="menu__price">₹15</span>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== LOCATION / CONTACT ===================== -->
-<section class="visit" id="visit">
-  <div class="wrap visit__grid">
-    <div>
-      <h2>अड्डे पर आइए</h2>
-      <ul class="visit__list">
-        <li><strong>पता:</strong> मेन रोड, आपका शहर</li>
-        <li><strong>समय:</strong> सुबह 5 बजे – रात 11 बजे</li>
-        <li><strong>फ़ोन:</strong> +91 00000 00000</li>
-      </ul>
-      <div class="visit__socials">
-        <a href="#" aria-label="Instagram">IG</a>
-        <a href="#" aria-label="WhatsApp">WA</a>
-        <a href="#" aria-label="Maps">📍</a>
-      </div>
-    </div>
-    <div class="visit__map" aria-hidden="true">🗺️</div>
-  </div>
-</section>
-
-<footer class="footer">
-  <p>© <span id="year"></span> चाय अड्डा — बना है प्यार और कड़क चाय से।</p>
-</footer>
+</div>
 
 <script src="script.js"></script>
 </body>

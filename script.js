@@ -25,15 +25,6 @@ setInterval(tickClock, 1000 * 15);
   }, 4000);
 })();
 
-// scroll hint
-document.getElementById("scrollHint")?.addEventListener("click", () => {
-  document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
-});
-
-// footer year
-const yearEl = document.getElementById("year");
-if (yearEl) yearEl.textContent = new Date().getFullYear();
-
 // floating audio player
 (function setupPlayer() {
   const audio = document.getElementById("audio");
