@@ -47,13 +47,64 @@ body {
   object-fit: cover;
   object-position: center;
   filter: saturate(0.92) contrast(1.04) brightness(0.97);
-  transform-origin: 55% 55%;
-  animation: ambientPan 26s ease-in-out infinite alternate;
 }
 
-@keyframes ambientPan {
-  0% { transform: scale(1) translate(0, 0); }
-  100% { transform: scale(1.08) translate(-1.5%, -1%); }
+.hero__fx {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* rising steam, built from three drifting/fading puffs per wisp */
+.steam-wisp {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  margin-left: -23px;
+}
+.steam-wisp--sm { width: 32px; height: 32px; margin-left: -16px; }
+
+.steam-wisp span {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,246,232,0.55) 0%, rgba(255,246,232,0) 72%);
+  filter: blur(3px);
+  opacity: 0;
+  animation: steamRise 4.5s ease-in infinite;
+}
+.steam-wisp span:nth-child(1) { animation-delay: 0s; }
+.steam-wisp span:nth-child(2) { animation-delay: 1.5s; }
+.steam-wisp span:nth-child(3) { animation-delay: 3s; }
+
+@keyframes steamRise {
+  0% { transform: translate(0, 0) scale(0.55); opacity: 0; }
+  15% { opacity: 0.85; }
+  60% { opacity: 0.4; }
+  100% { transform: translate(6px, -130px) scale(1.5); opacity: 0; }
+}
+
+/* flickering glow from the coal stove */
+.stove-glow {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  margin-left: -45px;
+  margin-top: -45px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,150,50,0.55) 0%, rgba(255,120,30,0.18) 45%, rgba(255,120,30,0) 75%);
+  mix-blend-mode: screen;
+  animation: stoveFlicker 1.8s ease-in-out infinite;
+}
+
+@keyframes stoveFlicker {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  35% { opacity: 0.9; transform: scale(1.12); }
+  55% { opacity: 0.55; transform: scale(0.95); }
+  80% { opacity: 0.85; transform: scale(1.08); }
 }
 
 .hero__vignette {
@@ -76,13 +127,21 @@ body {
   letter-spacing: 0.02em;
 }
 
-.hero__clock { font-variant-numeric: tabular-nums; opacity: 0.9; }
+.hero__clock,
+.hero__online {
+  background: rgba(15, 8, 4, 0.45);
+  backdrop-filter: blur(6px);
+  border-radius: 999px;
+  padding: 6px 14px;
+}
+
+.hero__clock { font-variant-numeric: tabular-nums; opacity: 0.95; }
 
 .hero__online {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 .dot {
   width: 8px; height: 8px; border-radius: 50%;
