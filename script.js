@@ -103,67 +103,72 @@ setInterval(tickClock, 1000 * 15);
   }
 
   window.onYouTubeIframeAPIReady = function () {
+    console.log("[player] YT API ready, constructing player");
     apiReady = true;
-    ytPlayer = new YT.Player("yt-player", {
-      height: "1",
-      width: "1",
-      playerVars: {
-        autoplay: 0,
-        controls: 0,
-        disablekb: 1,
-      },
-      events: {
-        onReady: (e) => {
-          e.target.cuePlaylist({ playlist: YT_VIDEO_IDS });
-          e.target.setShuffle(true);
-          updateTrackMeta();
+    try {
+      ytPlayer = new YT.Player("yt-player", {
+        height: "1",
+        width: "1",
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
         },
-        onStateChange: (e) => {
-          if (e.data !== YT.PlayerState.UNSTARTED) consecutiveErrors = 0;
-          updateTrackMeta();
-          if (e.data === YT.PlayerState.PLAYING) {
-            playIcon.innerHTML = ICON_PAUSE;
-            startProgressLoop();
-          } else {
-            playIcon.innerHTML = ICON_PLAY;
-            stopProgressLoop();
-          }
+        events: {
+          onReady: (e) => {
+            console.log("[player] onReady, cueing", YT_VIDEO_IDS.length, "tracks");
+            e.target.cuePlaylist({ playlist: YT_VIDEO_IDS });
+            e.target.setShuffle(true);
+            updateTrackMeta();
+          },
+          onStateChange: (e) => {
+            console.log("[player] state change:", e.data);
+            if (e.data !== YT.PlayerState.UNSTARTED) consecutiveErrors = 0;
+            updateTrackMeta();
+            if (e.data === YT.PlayerState.PLAYING) {
+              playIcon.innerHTML = ICON_PAUSE;
+              startProgressLoop();
+            } else {
+              playIcon.innerHTML = ICON_PLAY;
+              stopProgressLoop();
+            }
+          },
+          // a track can be broken/removed/region-blocked; skip it instead of getting stuck
+          onError: (e) => {
+            console.warn("[player] track error:", e.data);
+            consecutiveErrors += 1;
+            if (consecutiveErrors <= YT_VIDEO_IDS.length && ytPlayer) {
+              ytPlayer.nextVideo();
+            } else {
+              trackTitle.textContent = "गाने लोड नहीं हो पाए";
+              trackArtist.textContent = "बाद में दोबारा कोशिश करें";
+            }
+          },
         },
-        // a track can be broken/removed/region-blocked; skip it instead of getting stuck
-        onError: () => {
-          consecutiveErrors += 1;
-          if (consecutiveErrors <= YT_VIDEO_IDS.length && ytPlayer) {
-            ytPlayer.nextVideo();
-          } else {
-            trackTitle.textContent = "गाने लोड नहीं हो पाए";
-            trackArtist.textContent = "बाद में दोबारा कोशिश करें";
-          }
-        },
-      },
-    });
+      });
+    } catch (err) {
+      console.error("[player] failed to construct YT.Player:", err);
+      trackTitle.textContent = "प्लेयर शुरू नहीं हो सका";
+      trackArtist.textContent = String(err && err.message || err);
+    }
   };
 
-  // load the (fairly heavy) YouTube IFrame API after the page itself has settled,
-  // so it doesn't compete with the hero video/image for bandwidth on first paint
-  function loadYouTubeApi() {
-    const apiTag = document.createElement("script");
-    apiTag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(apiTag);
-
-    // if the IFrame API itself never loads (network/ad-blocker), surface that instead of spinning forever
-    setTimeout(() => {
-      if (!apiReady) {
-        trackTitle.textContent = "प्लेयर लोड नहीं हो सका";
-        trackArtist.textContent = "ब्राउज़र/एडब्लॉकर जाँचें";
-      }
-    }, 8000);
+  function showLoadFailure(reason) {
+    console.error("[player] YouTube IFrame API failed to load:", reason);
+    trackTitle.textContent = "प्लेयर लोड नहीं हो सका";
+    trackArtist.textContent = "कंसोल देखें (F12)";
   }
 
-  if (document.readyState === "complete") {
-    loadYouTubeApi();
-  } else {
-    window.addEventListener("load", loadYouTubeApi, { once: true });
-  }
+  console.log("[player] requesting YouTube IFrame API script");
+  const apiTag = document.createElement("script");
+  apiTag.src = "https://www.youtube.com/iframe_api";
+  apiTag.onerror = () => showLoadFailure("script failed to load (network/blocked)");
+  document.head.appendChild(apiTag);
+
+  // if the script loads but YouTube never calls back, surface that instead of spinning forever
+  setTimeout(() => {
+    if (!apiReady) showLoadFailure("onYouTubeIframeAPIReady never fired within 6s");
+  }, 6000);
 
   playBtn.addEventListener("click", () => {
     if (!ytPlayer || typeof ytPlayer.getPlayerState !== "function") return;
