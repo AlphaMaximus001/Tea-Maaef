@@ -72,7 +72,14 @@ setInterval(tickClock, 1000 * 15);
   let ytPlayer = null;
   let progressTimer = null;
   let apiReady = false;
+  let stateChanged = false;
   let consecutiveErrors = 0;
+
+  function showAdBlockNotice() {
+    console.error("[player] cued but no state change after 6s — likely blocked by an ad blocker (e.g. Brave Shields, uBlock)");
+    trackTitle.textContent = "एडब्लॉकर इसे रोक रहा है";
+    trackArtist.textContent = "इस साइट के लिए शील्ड्स/एडब्लॉकर बंद करें";
+  }
 
   function updateTrackMeta() {
     if (!ytPlayer || typeof ytPlayer.getVideoData !== "function") return;
@@ -120,9 +127,15 @@ setInterval(tickClock, 1000 * 15);
             e.target.cuePlaylist({ playlist: YT_VIDEO_IDS });
             e.target.setShuffle(true);
             updateTrackMeta();
+            // if cuePlaylist never actually progresses (e.g. an ad blocker silently
+            // drops the requests the embed needs), say so instead of spinning forever
+            setTimeout(() => {
+              if (!stateChanged) showAdBlockNotice();
+            }, 6000);
           },
           onStateChange: (e) => {
             console.log("[player] state change:", e.data);
+            stateChanged = true;
             if (e.data !== YT.PlayerState.UNSTARTED) consecutiveErrors = 0;
             updateTrackMeta();
             if (e.data === YT.PlayerState.PLAYING) {
