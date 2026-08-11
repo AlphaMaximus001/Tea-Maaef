@@ -3,32 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>चाय गरम | Chai Garam</title>
-<meta name="description" content="असली अड्डे की चाय — गरम, ताज़ा, और अपनों जैसी।">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍵</text></svg>">
+<title>चाय की टपरी</title>
+<meta name="description" content="चाय की टपरी — दिन के हर पहर का अपना मिज़ाज़, अपनी चाय।">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🫖</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div class="hero">
-  <div class="hero__bg" aria-hidden="true">
-    <img class="hero__poster" src="chai.jpeg" alt="">
-    <video class="hero__scene" id="heroVideo" autoplay loop muted playsinline preload="auto" poster="chai.jpeg">
-      <source src="b_2D_vector_illustrati.mp4" type="video/mp4">
-    </video>
-    <div class="hero__vignette"></div>
+<div class="tapri" id="tapri">
+  <div class="tapri__grain" aria-hidden="true"></div>
+  <div class="tapri__vignette" aria-hidden="true"></div>
+
+  <div class="tapri__scene" aria-hidden="true">
+    <svg class="tapri__art" viewBox="0 0 900 900" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="glow" cx="50%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="var(--c-amber)" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="var(--c-amber)" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <ellipse cx="450" cy="700" rx="420" ry="120" fill="url(#glow)"/>
+
+      <!-- wooden bench -->
+      <rect x="120" y="640" width="660" height="34" rx="6" fill="var(--c-bench)"/>
+      <rect x="120" y="640" width="660" height="8" rx="4" fill="var(--c-bench-light)" opacity="0.5"/>
+      <rect x="150" y="674" width="26" height="130" fill="var(--c-bench-dark)"/>
+      <rect x="724" y="674" width="26" height="130" fill="var(--c-bench-dark)"/>
+      <g stroke="var(--c-bench-dark)" stroke-width="2" opacity="0.4">
+        <line x1="220" y1="644" x2="220" y2="670"/>
+        <line x1="340" y1="644" x2="340" y2="670"/>
+        <line x1="460" y1="644" x2="460" y2="670"/>
+        <line x1="580" y1="644" x2="580" y2="670"/>
+        <line x1="680" y1="644" x2="680" y2="670"/>
+      </g>
+
+      <!-- steel kettle (right) -->
+      <g id="kettle">
+        <ellipse cx="590" cy="628" rx="98" ry="20" fill="#000" opacity="0.18"/>
+        <path d="M510 560 Q510 480 590 470 Q670 480 670 560 Q670 610 590 616 Q510 610 510 560 Z" fill="var(--c-kettle)"/>
+        <path d="M520 555 Q520 495 590 486" stroke="var(--c-brass)" stroke-width="4" fill="none" opacity="0.5"/>
+        <path d="M665 545 Q715 530 705 470 Q698 440 665 448" stroke="var(--c-kettle)" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <path d="M555 470 Q590 440 625 470" stroke="var(--c-kettle-dark)" stroke-width="14" fill="none" stroke-linecap="round"/>
+        <ellipse cx="590" cy="470" rx="20" ry="8" fill="var(--c-brass)"/>
+        <circle cx="590" cy="466" r="6" fill="var(--c-kettle-dark)"/>
+      </g>
+
+      <!-- chipped glass kulhad (left) -->
+      <g id="kulhad">
+        <ellipse cx="330" cy="632" rx="66" ry="14" fill="#000" opacity="0.18"/>
+        <path d="M285 560 L295 618 Q330 632 365 618 L375 560 Z" fill="var(--c-terracotta)"/>
+        <path d="M285 560 L375 560 L370 575 L290 575 Z" fill="var(--c-terracotta-light)"/>
+        <ellipse cx="330" cy="560" rx="45" ry="10" fill="var(--c-amber)" opacity="0.9"/>
+        <!-- chip in the rim -->
+        <path d="M352 552 Q360 548 366 554 Q362 560 353 559 Z" fill="var(--c-bench-dark)" opacity="0.55"/>
+        <path d="M300 590 Q330 598 360 590" stroke="var(--c-terracotta-light)" stroke-width="2" fill="none" opacity="0.4"/>
+      </g>
+    </svg>
+
+    <canvas class="tapri__steam" id="steamCanvas" aria-hidden="true"></canvas>
   </div>
 
-  <div class="hero__topbar">
-    <span class="hero__clock" id="liveClock">--:--</span>
-  </div>
+  <header class="tapri__top">
+    <div class="state-toggle" id="stateToggle" role="group" aria-label="पहर बदलें">
+      <button type="button" data-state="subah">सुबह</button>
+      <button type="button" data-state="shaam">शाम</button>
+      <button type="button" data-state="raat">रात</button>
+    </div>
+  </header>
 
-  <div class="hero__content">
-    <h1 class="sr-only">चाय गरम</h1>
-    <p class="hero__tagline">गरम कड़क चाय, ताज़ी भाप, अपनों वाली बातें</p>
+  <div class="tapri__content">
+    <h1 class="wordmark">चाय की टपरी</h1>
+    <p class="shayari" id="shayariLine"></p>
   </div>
 
   <!-- floating audio player, backed by a YouTube playlist -->
@@ -36,7 +85,7 @@
     <div class="player__art" id="ytThumb" aria-hidden="true"><span id="ytThumbFallback">🎵</span></div>
     <div class="player__meta">
       <p class="player__title" id="trackTitle">लोड हो रहा है…</p>
-      <p class="player__artist" id="trackArtist">Chai Garam Radio</p>
+      <p class="player__artist" id="trackArtist">टपरी रेडियो</p>
       <div class="player__progress">
         <div class="player__progress-bar" id="progressBar"></div>
       </div>
