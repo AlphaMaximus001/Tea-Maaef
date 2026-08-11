@@ -12,17 +12,36 @@ function tickClock() {
 tickClock();
 setInterval(tickClock, 1000 * 15);
 
-// ambient "online now" counter (fake, gently drifting — swap for real data later)
-(function driftOnlineCount() {
+// live "people here right now" counter, backed by /api/presence (Vercel KV)
+(function trackPresence() {
   const el = document.getElementById("onlineCount");
   if (!el) return;
-  let count = 24 + Math.floor(Math.random() * 20);
-  el.textContent = count;
-  setInterval(() => {
-    count += Math.floor(Math.random() * 5) - 2;
-    count = Math.max(8, count);
-    el.textContent = count;
-  }, 4000);
+
+  const SESSION_KEY = "chai-adda-session-id";
+  let sessionId = sessionStorage.getItem(SESSION_KEY);
+  if (!sessionId) {
+    sessionId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+    sessionStorage.setItem(SESSION_KEY, sessionId);
+  }
+
+  async function ping() {
+    try {
+      const res = await fetch("/api/presence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: sessionId }),
+        keepalive: true,
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (typeof data.count === "number") el.textContent = data.count;
+    } catch {
+      // presence endpoint unreachable — leave the last known count in place
+    }
+  }
+
+  ping();
+  setInterval(ping, 10000);
 })();
 
 // floating audio player, backed by a YouTube playlist via the IFrame Player API
