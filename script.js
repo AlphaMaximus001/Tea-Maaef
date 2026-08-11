@@ -12,38 +12,6 @@ function tickClock() {
 tickClock();
 setInterval(tickClock, 1000 * 15);
 
-// live "people here right now" counter, backed by /api/presence (Vercel KV)
-(function trackPresence() {
-  const el = document.getElementById("onlineCount");
-  if (!el) return;
-
-  const SESSION_KEY = "chai-adda-session-id";
-  let sessionId = sessionStorage.getItem(SESSION_KEY);
-  if (!sessionId) {
-    sessionId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
-    sessionStorage.setItem(SESSION_KEY, sessionId);
-  }
-
-  async function ping() {
-    try {
-      const res = await fetch("/api/presence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: sessionId }),
-        keepalive: true,
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (typeof data.count === "number") el.textContent = data.count;
-    } catch {
-      // presence endpoint unreachable — leave the last known count in place
-    }
-  }
-
-  ping();
-  setInterval(ping, 10000);
-})();
-
 // floating audio player, backed by an explicit list of YouTube video IDs
 // (matched to the "Chai & Classics" Spotify playlist, one lookup per track)
 (function setupPlayer() {

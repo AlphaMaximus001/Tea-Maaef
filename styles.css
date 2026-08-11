@@ -59,42 +59,21 @@ body {
 }
 
 .hero__topbar {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 2;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 24px clamp(16px, 5vw, 48px) 0;
   font-size: 0.9rem;
   letter-spacing: 0.02em;
 }
 
-.hero__clock,
-.hero__online {
-  background: rgba(15, 8, 4, 0.45);
-  backdrop-filter: blur(6px);
-  border-radius: 999px;
-  padding: 6px 14px;
-}
-
-.hero__clock { font-variant-numeric: tabular-nums; opacity: 0.95; }
-
-.hero__online {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  opacity: 0.95;
-}
-.dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: #6fe07a;
-  box-shadow: 0 0 0 0 rgba(111, 224, 122, 0.6);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(111, 224, 122, 0.55); }
-  70% { box-shadow: 0 0 0 10px rgba(111, 224, 122, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(111, 224, 122, 0); }
+.hero__clock {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.7);
 }
 
 .sr-only {

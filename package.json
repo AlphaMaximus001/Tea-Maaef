@@ -1,9 +1,0 @@
-{
-  "name": "chai-adda",
-  "version": "1.0.0",
-  "private": true,
-  "description": "चाय अड्डा — single-page tea stall site",
-  "dependencies": {
-    "@vercel/kv": "^2.0.0"
-  }
-}
