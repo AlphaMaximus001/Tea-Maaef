@@ -44,9 +44,21 @@ setInterval(tickClock, 1000 * 15);
   setInterval(ping, 10000);
 })();
 
-// floating audio player, backed by a YouTube playlist via the IFrame Player API
+// floating audio player, backed by an explicit list of YouTube video IDs
+// (matched to the "Chai & Classics" Spotify playlist, one lookup per track)
 (function setupPlayer() {
-  const YT_PLAYLIST_ID = "PLVwbgC8mRDea4xoSwC0ZNMiIr8OHiaFog";
+  const YT_VIDEO_IDS = [
+    "mFNNKeunEeY", "waeAGdCvJd8", "hjfzFVw2Zjo", "569LRWPPYqI", "eCpbYmO4Ndo",
+    "4h4MIVYS6S8", "aqppgtdWt4M", "d_5yHuh7L54", "HxMZXp-ur3I", "YJTLMl1iRW4",
+    "L8ywQkyf37k", "jMS9Kcl1ilQ", "QkGqpVYjLUw", "xP2OcqFcKSY", "b04C6hKGLXA",
+    "o4qTd5VhLcs", "hD0vuSJxzmc", "rGJO3P_UAzs", "j4U8GzVz75M", "SBFagY_I8sM",
+    "Ju6kNKaBOQ8", "rzG0m0czKF4", "1RUuRXBq9a0", "aZyWUVTg0Ps", "ME0fguaRPhA",
+    "beXSXmBLmgg", "3ct4ppLwXCQ", "1n13FVRtVxs", "W6tsny4iFJY", "wulRtvNuTl8",
+    "xImqpaP5j2k", "b4Fok9Y3sho", "ofjT0GcUijo", "vJTl-BcE0Fk", "swRditfMHK8",
+    "w0AkZQUokog", "jyYqrVfopxo", "E6L_qqUx7aY", "qT6ryaYvY9M", "EYMeqpY5HFg",
+    "BqdzXlDfubg", "aSJ_jcEPOu0", "Zv7n2juHqQI", "MH_Q8YCS7CI", "_lgACMqCpus",
+    "P4ofSL-n3s0", "dynXfBVQ_zk", "ciU2Kb0bxew", "PUBaJz8eoRk", "4U1HsYrcHuc",
+  ];
 
   const playBtn = document.getElementById("playBtn");
   const playIcon = document.getElementById("playIcon");
@@ -107,14 +119,13 @@ setInterval(tickClock, 1000 * 15);
       height: "1",
       width: "1",
       playerVars: {
-        listType: "playlist",
-        list: YT_PLAYLIST_ID,
         autoplay: 0,
         controls: 0,
         disablekb: 1,
       },
       events: {
         onReady: (e) => {
+          e.target.cuePlaylist({ playlist: YT_VIDEO_IDS });
           e.target.setShuffle(true);
           updateTrackMeta();
         },
